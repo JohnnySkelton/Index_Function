@@ -433,44 +433,28 @@ def upload_to_elastic(vectorElastic:ElasticsearchStore, texts:list, metadata:lis
 
 
 
-def run_upload_to_elastic(from_azure_container: bool, from_directory: bool, is_sample_questions: bool, check_for_duplicates_in_elastic: bool, last_processed_time: datetime, container_name: str, prefix: str = None):
-    """Modified to process only a specific container"""
-    logging.info(f'Processing container: {container_name} | from_azure_container: {from_azure_container} | from_directory: {from_directory} | is_sample_questions: {is_sample_questions} | check_elastic_for_duplicates: {check_for_duplicates_in_elastic}')
-    
-    # Find the product area for this container
-    product_area = next((area for area, container in PRODUCT_CONTAINERS.items() if container == container_name), None)
-    if not product_area:
-        raise ValueError(f"No product area found for container: {container_name}")
-    
-    # Only process the specific container's indexes
-    indexes = PRODUCT_INDEXES.get(product_area, [])
-    if not indexes:
-        raise ValueError(f"No indexes found for product area: {product_area}")
-    
-    print(f'Product Area: {product_area}')
-    print(f'Container Name: {container_name}')
-    
-    # Loop over just the specific container's indexes
-    for elastic_index_name in indexes:
-        print(f'Elastic Index Name: {elastic_index_name}')
-        split_documents = load_documents(from_azure_container, from_directory, is_sample_questions, container_name, prefix, last_processed_time)
-        texts, metadata, ids = update_metadata(split_documents, container_name, from_azure_container)
-        
-        if len(texts) == 0:
-            logging.info(f'No documents to upload for container: {container_name}, index: {elastic_index_name}')
-            continue
-        
-        print(f'Number of documents to upload: {len(texts)}')
-        check_for_duplicates(texts, metadata, ids)
-        print(f'Number of documents after checking for duplicates: {len(texts)}')
-        vectorElastic = create_vector_store(elastic_index_name)
-        print(vectorElastic.index_name)
-        
-        if check_for_duplicates_in_elastic:
-            check_elastic_for_duplicates(vectorElastic, elastic_index_name, metadata, texts, ids)
-        
-        uploading_message = f'Uploading {len(texts)} chunks, from {container_name} to {elastic_index_name}'
-        print(uploading_message)
-        logging.info(uploading_message)
-        upload_to_elastic(vectorElastic, texts, metadata, ids)
+def run_upload_to_elastic(from_azure_container:bool, from_directory:bool, is_sample_questions:bool, check_for_duplicates_in_elastic:bool, last_processed_time:datetime, prefix:str = None):
+    #One of these needs to be set to true depending on where the source of documents is (Azure Container or Directory)    
+    logging.log(logging.INFO, 'from_azure_container: [' + str(from_azure_container) + ']\tfrom_directory: [' + str(from_directory) + ']\tis_sample_questions: [' + str(is_sample_questions) + ']\tcheck_elastic_for_duplicates: [' + str(check_elastic_for_duplicates) + ']')
+    for product_area in PRODUCT_AREAS:
+        indexes = PRODUCT_INDEXES[product_area]
+        print('Product Area: ' + product_area)
+        container_name = PRODUCT_CONTAINERS[product_area]
+        for elastic_index_name in indexes:
+            print('Elastic Index Name: ' + elastic_index_name)
+            print('Container Name: ' + container_name)
+            split_documents = load_documents(from_azure_container, from_directory, is_sample_questions, container_name, prefix, last_processed_time)
+            texts, metadata, ids = update_metadata(split_documents, container_name, from_azure_container)
+            print('Number of documents to upload: ' + str(len(texts)))
+            check_for_duplicates(texts, metadata, ids)
+            print('Number of documents to upload after checking for duplicates: ' + str(len(texts)))
+            vectorElastic = create_vector_store(elastic_index_name)
+            print(vectorElastic.index_name)
+            if check_for_duplicates_in_elastic:
+                check_elastic_for_duplicates(vectorElastic, elastic_index_name, metadata, texts, ids)
+            #just to make sure we are hitting the right ones
+            uploading_message = f'Uploading {str(len(texts))} chunks, from {container_name} to {elastic_index_name}'
+            print(uploading_message)
+            logging.log(logging.INFO, uploading_message)
+            upload_to_elastic(vectorElastic, texts, metadata, ids)
 

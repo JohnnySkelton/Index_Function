@@ -13,8 +13,8 @@ def get_cron_expression():
     Format: {second} {minute} {hour} {day} {month} {day_of_week}
     """
     try:
-        days = int(os.getenv('UPLOAD_INTERVAL_DAYS', '7'))
-        minutes = int(os.getenv('UPLOAD_INTERVAL_MINUTES', '0'))
+        days = int(os.environ['UPLOAD_INTERVAL_DAYS'])
+        minutes = int(os.environ['UPLOAD_INTERVAL_MINUTES'])
         
         # Validation
         if days < 0 or minutes < 0:
@@ -116,8 +116,8 @@ def DeleteTimerTrigger(deleteTimer: func.TimerRequest) -> None:
         last_modified_date = datetime.now() - time_window
         
         # Configure deletion parameters
-        hard_delete = os.environ.get('HARD_DELETE', 'False').lower() == 'true'
-        run_for_all_products = os.environ.get('RUN_FOR_ALL_PRODUCTS', 'True').lower() == 'true'
+        hard_delete = os.environ['HARD_DELETE']
+        run_for_all_products = os.environ['RUN_FOR_ALL_PRODUCTS']
         
         if run_for_all_products:
             logging.info(f'Running delete for all product areas with hard_delete={hard_delete}')
@@ -127,7 +127,7 @@ def DeleteTimerTrigger(deleteTimer: func.TimerRequest) -> None:
             )
         else:
             # Single product deletion
-            index_to_delete_from = os.getenv('INDEX_TO_DELETE_FROM')
+            index_to_delete_from = os.environ['INDEX_TO_DELETE_FROM']
             
             if not index_to_delete_from:
                 raise ValueError("INDEX_TO_DELETE_FROM environment variable is required for single product deletion")

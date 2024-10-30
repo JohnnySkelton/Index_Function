@@ -14,4 +14,5 @@ unstructured
 unstructured-client
 unstructured-inference
 unstructured.pytesseract
+unstructured[docx]
 python-magic-bin

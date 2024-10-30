@@ -10,3 +10,8 @@ langchain-community
 langchain-openai
 python-dotenv
 pandas
+unstructured
+unstructured-client
+unstructured-inference
+unstructured.pytesseract
+python-magic-bin
